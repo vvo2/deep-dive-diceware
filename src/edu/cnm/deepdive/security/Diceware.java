@@ -8,31 +8,38 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Random;
+import java.util.ResourceBundle;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * 
+ * @author vovo at Deep Dive Coding Java Cohort 3
+ *
+ */
 public class Diceware {
 
   private static final String LINE_PATTERN = "^\\s*(\\d+)\\s+(\\S+)\\s*$";
   
-  
-  private Map<String, String> words;
-  private Random rng;
-  private int numDice = 0;
+  private List<String> words;
+  private Random rng = null;
 
   /**
-   * 
-   * @param file
-   * @throws FileNotFoundException
-   * @throws IOException
-   * @throws NoSuchAlgorithmException
+   * Initializes an instance of<code>Diceware</code> using a reference to an object
+   * {@link java.io.File}.  with exceptions to throws
+   * @param file                    file to read for word list
+   * @throws FileNotFoundException  if file does not exist
+   * @throws IOException            if file can not be read
    */
-  public Diceware(File file) throws FileNotFoundException, IOException, NoSuchAlgorithmException {
-    words = new HashMap<>();
-    rng = SecureRandom.getInstanceStrong();
+  public Diceware(File file) throws FileNotFoundException, IOException {
+    words = new ArrayList<>();
+    
     try ( // try will auto close anything that fail
         FileInputStream input = new FileInputStream(file); // open to read
         InputStreamReader reader = new InputStreamReader(input);
@@ -41,10 +48,7 @@ public class Diceware {
       for (String line = buffer.readLine(); line != null; line = buffer.readLine()) {
         Matcher m = p.matcher(line);
         if (m.matches()) {
-          if (numDice == 0) {
-            numDice = m.group(1).length();
-          }
-          words.put(m.group(1), m.group(2));
+          words.add(m.group(2));
         }
         // TODO process dice key and work from Line.
 
@@ -52,22 +56,84 @@ public class Diceware {
 
     }
   }
-
-  public String[] generate(int length) {
-    String[] passphrase = new String[length];
-    for (int i = 0; i < length; i++) {
-      passphrase[i] = generate();
-    }
-    return passphrase;
-  }
-
-  private String generate() {
-    String key = "";
-    for (int roll = 0; roll < numDice; roll++) {
-      int value = rng.nextInt(6) + 1;
-      key += value;
-    }
-    return words.get(key);
+  
+  /**
+   * Initializes an instance of<code>Diceware</code> to collect from the source of the word list
+   * @param source                  word list
+   */
+  public Diceware (Collection<String> source) {
+    words = new ArrayList<>(source);
   }
   
-}
+  /**
+   * Initializes an instance of<code>Diceware</code>, ResourceCollection object as a source for the word list
+   * 
+   * @param bundle                  Property containing word list
+   */
+  public Diceware(ResourceBundle bundle) {
+    words = new ArrayList<>();
+    Enumeration<String> en = bundle.getKeys();
+    while (en.hasMoreElements()) {
+      words.add(bundle.getString(en.nextElement()));
+    }
+  }
+  
+  /**
+   * return random instance to be uses for selecting word from the word list.  
+   * @return                        return random
+   * @throws NoSuchAlgorithmException throws
+   */
+  public Random getRng() throws NoSuchAlgorithmException { 
+    if (rng == null) {
+      rng = SecureRandom.getInstanceStrong();
+    }
+    return rng;
+  }
+
+  /**
+   * sets a reference to the Random instance to be used for selecting words from the word list
+   * @param rng                     reference to Random instance
+   */
+  public void setRng(Random rng) {
+    this.rng = rng;
+  }
+
+  /**
+   * generate and returns a password of the specified length. The inclusion of duplicates is controlled by the dubplcatedAllowed argument.
+   * if the specified length is greater than the number of words in the word list, and duplicates aren't allowed, then an infinite loop will result.
+   * @param length                      number of word to include in passphrase
+   * @param duplicatesAllowed           true if 
+   * @return                            words in generated passphrase.
+   * @throws NoSuchAlgorithmException   if algorithm for default strong source of randomness is not available.
+   */
+  public String[] generate(int length, boolean duplicatesAllowed) throws NoSuchAlgorithmException {
+    List<String> passphrase = new LinkedList<>();
+    while (passphrase.size() < length) {
+      String word = generate();
+      if (duplicatesAllowed || !passphrase.contains(word)) {
+        passphrase.add(word);
+      }
+    }
+   // return passphrase.toArray(new String[0]);//0 length array, compiler make the array size
+    return passphrase.toArray(new String[passphrase.size()]);
+  }
+  
+  /**
+   * Generate and return a password of the specified length. This method simply invokes generate(int length, boolean duplicatesAllowed), specifies duplicate allow
+   * @param length                      Number of words for generated passphrase
+   * @return                            words in generated passphrase 
+   * @throws NoSuchAlgorithmException   if algorithm default strong source of randomnesss is not available
+   */
+  public String[] generate(int length) throws NoSuchAlgorithmException {
+    return generate(length, true);
+  }
+
+  private String generate() throws NoSuchAlgorithmException {
+      int index = getRng().nextInt(words.size());
+      return words.get(index);
+    }
+    
+  
+ }
+  
+
