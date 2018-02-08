@@ -13,11 +13,22 @@ public class Test {
       throws FileNotFoundException, IOException, NoSuchAlgorithmException {
 //  File file = new File("eff_large_wordlist.txt");
 //  Diceware dw = new Diceware(file);
-//  Diceware dw = new Diceware(Arrays.asList(new String[] {"the", "quick", "brown", "fox"} ));
-  ResourceBundle bundle = ResourceBundle.getBundle("wordlist");
-  Diceware dw = new Diceware(bundle);
-  String[] passphrase = dw.generate(6, true);
-  System.out.println(Arrays.toString(passphrase));
+//  ;
+  try {
+//   ResourceBundle bundle = ResourceBundle.getBundle("wordlist");
+//   Diceware dw = new Diceware(bundle);
+    Diceware dw = new Diceware(Arrays.asList(new String[] {"the", "quick", "brown", "fox"} ));
+    String[] passphrase = dw.generate(-5, false);
+    System.out.println(Arrays.toString(passphrase));
+  } catch (Diceware.InsufficientPoolException ex) {
+    System.out.println("Not enough words list in the word list"); 
+  } catch (IllegalArgumentException ex) {
+ // TODO assume we've logged this or done something else interesting with ex.
+    throw ex;
+ // System.out.println("You can't have a negative length passphrase");
+  } finally {
+    System.out.println("Well, now we're done");
   }
+ }
 
 }
