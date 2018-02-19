@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
  */
 public class Diceware {
 
-  private static final String NEGATIVE_PASSPHRASE_MESSAGE = "Passphrase length cannot be negative.";
+  private static final String NEGATIVE_PASSPHRASE_MESSAGE = "Passphrase length must be Positive!";
 
   private static final String LINE_PATTERN = "^\\s*(\\d+)\\s+(\\S+)\\s*$";
   
@@ -108,11 +108,11 @@ public class Diceware {
    * @return                            words in generated passphrase.
    * @throws NoSuchAlgorithmException   if algorithm for default strong source of randomness is not available.
    * @throws InsufficientPoolException   if password length exceeds word list, and duplicates not allowed or word list has no words.
-   * @throws IllegalArgumentException   if requested length is negative.
+   * @throws IllegalArgumentException   if requested length isn't positive.
    */
   public String[] generate(int length, boolean duplicatesAllowed) 
       throws NoSuchAlgorithmException, InsufficientPoolException, IllegalArgumentException {
-    if (length < 0 ) {
+    if (length <= 0 ) {
       throw new IllegalArgumentException(NEGATIVE_PASSPHRASE_MESSAGE);
     }
     if ((words.size() == 0 && length > 0)
@@ -138,10 +138,20 @@ public class Diceware {
    * @throws InsufficientPoolException  if word list has no words.
    * @throws IllegalArgumentException   if requested length is negative.
    */
-  public String[] generate(int length) throws NoSuchAlgorithmException, InsufficientPoolException, IllegalArgumentException {
+  public String[] generate(int length)
+      throws NoSuchAlgorithmException, InsufficientPoolException, IllegalArgumentException {
     return generate(length, true);
   }
-
+  public String generate(int length, String delimiter)
+      throws InsufficientPoolException, NoSuchAlgorithmException, IllegalArgumentException {
+    String[] words = generate(length);
+    StringBuilder builder = new StringBuilder(words[0]);
+    for (int i = 1; i < words.length; i++) {
+      builder.append(delimiter);
+      builder.append(words[i]);
+    }
+    return builder.toString();
+  }
   private String generate() throws NoSuchAlgorithmException {
       int index = getRng().nextInt(words.size());
       return words.get(index);
@@ -152,6 +162,7 @@ public class Diceware {
       
     }
   }
+  
   
  }
   
